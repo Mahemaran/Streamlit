@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 
 # Load the trained model
-with open("C:\\Users\\DELL\\PycharmProjects\\pythonProject\\Streamlit\\Traffic_prediction.pickle", 'rb') as f:
+with open("Traffic_prediction.pickle", 'rb') as f:
     model = pickle.load(f)
 
 # Streamlit app layout
