@@ -43,8 +43,8 @@ elif page == "Add Member":
         age = st.number_input("Age", min_value=10, max_value=100, value=25)
         gender = st.selectbox("Gender", ["Male", "Female"])
         plan = st.selectbox("Membership Plan", ["Monthly", "3-Months", "6-Months", "9-Months", "12-Months"])
-        height = st.text_input("Height(in Cm)")
-        weight = st.text_input("Weight(in Kg)")
+        height = st.number_input("Height(in Cm)", min_value=10, value=160)
+        weight = st.number_input("Weight(in Kg)", min_value=10, value=60)
         contact = st.text_input("Contact Number")
         # submit button
         submit_button = st.form_submit_button("Add Member")
@@ -169,109 +169,97 @@ def calculate_maintenance_calories(selected_member_name, age, gender, height, we
 
 
 if page == "Calorie Check":
-    try:
-        # Check if 'members' exists in session state and is not empty
-        if 'members' not in st.session_state or st.session_state['members'].empty:
-            st.write("Please add a member to check their TDEE.")
-        else:
-            # Get list of member names
-            member_names = st.session_state['members']['Name'].tolist()
+    if 'members' not in st.session_state or st.session_state['members'].empty:
+        st.write("Please add a member to check their TDEE.")
+    else:
+        member_names = st.session_state['members']['Name'].tolist()
+        if member_names:
+            selected_member_name = st.selectbox("Select Member to Check", member_names)
+            if selected_member_name:
+                # Retrieve the member's details from the DataFrame
+                member_data = st.session_state['members'].loc[st.session_state['members']['Name'] == selected_member_name]
+                if not member_data.empty:
+                    age = member_data['Age'].values[0]
+                    gender = member_data['Gender'].values[0]
+                    height = member_data['Height'].values[0]
+                    weight = member_data['Weight'].values[0]
 
-            # Check if there are any members
-            if member_names:
-                selected_member_name = st.selectbox("Select Member to Check", member_names)
+                    # Display the details and allow input for activity level
+                    st.write(f"**Age**: {age}")
+                    st.write(f"**Gender**: {gender}")
+                    st.write(f"**Height (cm)**: {height}")
+                    st.write(f"**Weight (kg)**: {weight}")
 
-                # Ensure a member is selected
-                if selected_member_name:
-                    # Retrieve the member's details from the DataFrame
-                    member_data = st.session_state['members'].loc[st.session_state['members']['Name'] == selected_member_name]
+                    # Input for activity level
+                    activity_level = st.selectbox("Activity Level",
+                                                  ["Sedentary", "Lightly active", "Moderately active", "Very active",
+                                                   "Super active"])
 
-                    if not member_data.empty:
-                        age = member_data['Age'].values[0]
-                        gender = member_data['Gender'].values[0]
-                        height = member_data['Height'].values[0]
-                        weight = member_data['Weight'].values[0]
-
-                        # Display the details and allow input for activity level
-                        st.write(f"**Age**: {age}")
-                        st.write(f"**Gender**: {gender}")
-                        st.write(f"**Height (cm)**: {height}")
-                        st.write(f"**Weight (kg)**: {weight}")
-
-                        # Input for activity level
-                        activity_level = st.selectbox("Activity Level",
-                                                      ["Sedentary", "Lightly active", "Moderately active", "Very active",
-                                                       "Super active"])
-
-                        if st.button("**Check TDEE**"):
-                            # Calculate TDEE only if selected_member_name is not None
-                            tdee = calculate_maintenance_calories(selected_member_name, age, gender, height, weight, activity_level)
-                            st.write(f"Total Daily Energy Expenditure (TDEE) for {selected_member_name}: {tdee:.2f} calories/day")
-                    else:
-                        st.write("No data available for the selected member.")
+                    if st.button("**Check TDEE**"):
+                        # Calculate TDEE only if selected_member_name is not None
+                        tdee = calculate_maintenance_calories(selected_member_name, age, gender, height, weight,
+                                                              activity_level)
+                        st.write(
+                            f"Total Daily Energy Expenditure (TDEE) for {selected_member_name}: {tdee:.2f} calories/day")
                 else:
-                    st.write("Please select a member to check their TDEE.")
+                    st.write("No data available for the selected member.")
             else:
-                st.write("No members found. Please add a member to check their TDEE.")
-    except Exception as e:
-        # Catch any exceptions (like NameError) and display an error message
-        st.error(f"An error occurred: {e}")
+                st.write("Please select a member to check their TDEE.")
+        else:
+            st.write("No members found. Please add a member to check their TDEE.")
 
 
-    def calculate_macros(tdee, weight_kg, goal):
-        tdee = float(tdee)
-        weight_kg = float(weight_kg)
-        # Protein intake: 2.0 grams per kg for cutting, 2.2 grams for bulking, and 1.8 grams for maintenance
-        protein_per_kg = {
-            "cutting": 2.0,
-            "bulking": 2.2,
-            "maintenance": 1.8
-        }
-        protein_grams = protein_per_kg[goal] * weight_kg
-        protein_calories = protein_grams * 4  # 4 calories per gram of protein
+        def calculate_macros(tdee, weight_kg, goal):
+            tdee = float(tdee)
+            weight_kg = float(weight_kg)
+            # Protein intake: 2.0 grams per kg for cutting, 2.2 grams for bulking, and 1.8 grams for maintenance
+            protein_per_kg = {
+                "cutting": 2.0,
+                "bulking": 2.2,
+                "maintenance": 1.8
+            }
+            protein_grams = protein_per_kg[goal] * weight_kg
+            protein_calories = protein_grams * 4  # 4 calories per gram of protein
 
-        # Fat intake: 25% of total daily calories for maintenance, lower for cutting (20%) and higher for bulking (30%)
-        fat_percentage = {
-            "cutting": 0.20,
-            "bulking": 0.30,
-            "maintenance": 0.25
-        }
-        fat_calories = tdee * fat_percentage[goal]
-        fat_grams = fat_calories / 9  # 9 calories per gram of fat
+            # Fat intake: 25% of total daily calories for maintenance, lower for cutting (20%) and higher for bulking (30%)
+            fat_percentage = {
+                "cutting": 0.20,
+                "bulking": 0.30,
+                "maintenance": 0.25
+            }
+            fat_calories = tdee * fat_percentage[goal]
+            fat_grams = fat_calories / 9  # 9 calories per gram of fat
 
-        # Calculate carb intake with remaining calories
-        carb_calories = tdee - (protein_calories + fat_calories)
-        carb_grams = carb_calories / 4  # 4 calories per gram of carbs
+            # Calculate carb intake with remaining calories
+            carb_calories = tdee - (protein_calories + fat_calories)
+            carb_grams = carb_calories / 4  # 4 calories per gram of carbs
 
-        # Fiber intake: 14 grams per 1,000 calories
-        fiber_grams = (tdee / 1000) * 14
+            # Fiber intake: 14 grams per 1,000 calories
+            fiber_grams = (tdee / 1000) * 14
 
-        return {
-            "Protein (grams)": protein_grams,
-            "Fat (grams)": fat_grams,
-            "Carbs (grams)": carb_grams,
-            "Fiber (grams)": fiber_grams
-        }
+            return {
+                "Protein (grams)": protein_grams,
+                "Fat (grams)": fat_grams,
+                "Carbs (grams)": carb_grams,
+                "Fiber (grams)": fiber_grams
+            }
 
 
-    tdee = calculate_maintenance_calories(selected_member_name, age, gender, height, weight, activity_level)
-    # st.write(f"Total Daily Energy Expenditure (TDEE) for {selected_member_name}: {tdee:.2f} calories/day")
+        tdee = calculate_maintenance_calories(selected_member_name, age, gender, height, weight, activity_level)
+        # st.write(f"Total Daily Energy Expenditure (TDEE) for {selected_member_name}: {tdee:.2f} calories/day")
 
-    goal = st.selectbox("**Select Goal**", ["maintenance", "cutting", "bulking"])
-    st.write(f"Calculating macros for goal: {goal}")
-    macros = calculate_macros(tdee, weight, goal)
+        goal = st.selectbox("**Select Goal**", ["maintenance", "cutting", "bulking"])
+        st.write(f"Calculating macros for goal: {goal}")
+        macros = calculate_macros(tdee, weight, goal)
 
-    # Display macro results
-    # for macro, value in macros.items():
-    #     st.write(f"{macro}: {value:.2f} grams")
-    macro_df = pd.DataFrame.from_dict(macros, orient='index', columns=['Grams'])
-    st.markdown("### Macronutrient Breakdown")
-    st.table(macro_df)
-    fig = px.pie(values=[macros['Protein (grams)'], macros['Fat (grams)'], macros['Carbs (grams)']],
-                 names=['Protein', 'Fat', 'Carbs'],
-                 title='Macronutrient Breakdown')
-    st.plotly_chart(fig)
-   # Footer
+        # Display macro results
+        # for macro, value in macros.items():
+        #     st.write(f"{macro}: {value:.2f} grams")
+        macro_df = pd.DataFrame.from_dict(macros, orient='index', columns=['Grams'])
+        st.markdown("### Macronutrient Breakdown")
+        st.table(macro_df)
+        fig = px.pie(values=[macros['Protein (grams)'], macros['Fat (grams)'], macros['Carbs (grams)']],
+                     names=['Protein', 'Fat', 'Carbs'],title='Macronutrient Breakdown',color_discrete_sequence=['red', 'blue', 'green'])
+        st.plotly_chart(fig)
 st.sidebar.write("**Contact Support:** Phone number: +91 9080973308")
-
-# streamlit run C:\Users\DELL\PycharmProjects\pythonProject\Streamlit\gym_membership.py
+# streamlit run C:\Users\MM34\PycharmProjects\pythonProject\Practice.py
