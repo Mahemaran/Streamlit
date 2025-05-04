@@ -10,7 +10,10 @@ AC = {
 }
 
 analysis_code = {
-    k: v[0] for k, v in AC.items()
+    "General condition": 'Visual : Component Damaged',
+    "Markings": "Labeling : Illegible Etch",
+    "sticky Trigger": "Functional : Sticky Trigger",
+    "Check function of device": "Functional : Will Not Run"
 }
 
 def find_failures(row):
@@ -21,7 +24,7 @@ def find_failures(row):
         if any(key in line for line in failures_found) and all(code not in codes for code in expected_codes):
             failures.append(analysis_code[key])
     return "\n".join(failures)
-data['Failures Found'] = data.apply(
+# data['Failures Found'] = data.apply(
 #     lambda row: "\n".join(
 #         map(lambda k: analysis_code[k],
 #             filter(
