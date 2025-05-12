@@ -174,3 +174,13 @@ output_file = os.path.join(downloads_folder, 'Bankai.csv')  # This will save in 
 # Convert DataFrame to CSV
 df.to_csv(output_file, index=False, header=True)  # Save the DataFrame as a CSV
 print(f"DataFrame has been written successfully!")
+
+PCA ={'Faulty Parts (3210)':'Cause Traced to Component Failure (D02)',
+    'Improper Maintenance (3214)':'Cause Traced to Maintenance (D07)',
+    'User Error (3215)':'Cause Traced to User (D11)',
+    'No Failure Found (3216)':'No  Problem Detected',
+    'Cause Not Established (D15)':'Cause Could Not Be Determined (3217)'}
+inputss = 'Improper Maintenance (3214)'
+
+pac = [j for i, j in PCA.items() if inputss in i]
+print(pac)
